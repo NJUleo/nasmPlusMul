@@ -1,4 +1,241 @@
-# nasmPlusMul
+## OS hw1: nasm
+
+#### 工具使用方式
+
+##### 编译
+
+nasm -felf64 -g kkp.asm
+
+-g 增加调试信息，供gdb调试
+
+##### 链接
+
+ld kkp.o
+
+##### makefile
+
+```shell
+install:
+        nasm -g -felf32 kkp.asm
+        ld  -m elf_i386 -o kkp kkp.o
+clean:
+        rm kkp kkp.o                 
+```
+
+##### readelf
+
+读取符号表，可以读可重定向目标文件和可执行文件.
+
+实际上一般可执行文件都是没有符号表的，符号都被对应的地址所代替，事实上这就是链接器做的事情。
+
+```shell
+readelf -s kkp.o
+Symbol table '.symtab' contains 7 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS kkp.asm
+     2: 0000000000000000     0 SECTION LOCAL  DEFAULT    1 
+     3: 0000000000000000     0 SECTION LOCAL  DEFAULT    2 
+     4: 0000000000000000     1 OBJECT  LOCAL  DEFAULT    1 msg
+     5: 0000000000000007     0 NOTYPE  LOCAL  DEFAULT  ABS msglen
+     6: 0000000000000000     0 NOTYPE  GLOBAL DEFAULT    2 _start
+
+readelf -s a.out
+Symbol table '.symtab' contains 12 entries:
+   Num:    Value          Size Type    Bind   Vis      Ndx Name
+     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND 
+     1: 00000000004000b0     0 SECTION LOCAL  DEFAULT    1 
+     2: 00000000006000d4     0 SECTION LOCAL  DEFAULT    2 
+     3: 0000000000000000     0 SECTION LOCAL  DEFAULT    3 
+     4: 0000000000000000     0 SECTION LOCAL  DEFAULT    4 
+     5: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS kkp.asm
+     6: 00000000006000d4     1 OBJECT  LOCAL  DEFAULT    2 msg
+     7: 0000000000000007     0 NOTYPE  LOCAL  DEFAULT  ABS msglen
+     8: 00000000004000b0     0 NOTYPE  GLOBAL DEFAULT    1 _start
+     9: 00000000006000db     0 NOTYPE  GLOBAL DEFAULT    2 __bss_start
+    10: 00000000006000db     0 NOTYPE  GLOBAL DEFAULT    2 _edata
+    11: 00000000006000e0     0 NOTYPE  GLOBAL DEFAULT    2 _end
+```
+
+由此可以发现链接程序进行了一些重定向。
+
+##### gdb调试
+
+gdb -tui a.out
+
+###### layout regs
+
+显示寄存器状态和汇编源码信息（pc位置、断点等）
+
+###### 断点设置
+
+b 函数名/行号/地址。。。
+
+info break 查看断点状况
+
+delete <断点id> 删除断点
+
+break sun if value==9 条件断点
+
+###### 查看变量/寄存器
+
+info reg查看寄存器
+
+p $pc 查看pc，其他寄存器同理，前面加美元号
+
+p/x 16进制
+
+>    ​    d 按十进制格式显示变量。
+>    ​    u 按十六进制格式显示无符号整型。
+>    ​    o 按八进制格式显示变量。
+>    ​    t 按二进制格式显示变量。
+>    ​    a 按十六进制格式显示变量。
+>    ​    c 按字符格式显示变量。
+>    ​    f 按浮点数格式显示变量
+
+
+
+###### 执行
+
+countinue 继续
+
+next 等于step over，不进入函数内部
+
+step 等于step in, 进入函数
+
+后面加 i 调试汇编
+
+```shell
+ni
+si
+si 10 # step 10 步汇编指令
+```
+
+#### 汇编语言语法
+
+$ 当前指令地址
+
+$$ 当前段地址
+
+RESx	reserve
+
+Dx	declare
+
+![1571099589224](/home/leo/.config/Typora/typora-user-images/1571099589224.png)
+
+##### 系统调用
+
+stdout	1
+
+stdin	0
+
+##### 寄存器
+
+###### General Registers
+
+EAX	累加器
+
+EBX	基址寄存器
+
+ECX	计数器
+
+EDX	数据寄存器
+
+ESP	栈指针（栈顶）stack pointer
+
+EBP	帧指针（栈底）stack-frame base pointer
+
+ESI	
+
+EDI
+
+##### .bss 节
+
+
+
+>SECTION .bss 
+>
+>variableName1:      RESB    1       ; 为一个字节保留(reserve)的空间 
+>
+>variableName2:      RESW    1       ; 为一个字保留(reserve)的空间 
+>
+>variableName3:      RESD    1       ; 为一个双字保留(reserve)的空间 
+>
+>variableName4:      RESQ    1       ; 为一个双精度浮点值保留(reserve)的空间 
+>
+>variableName5:      REST    1       ; 为一个拓展精度浮点值保留(reserve)的空间
+
+
+
+##### 寄存器职责
+
+##### 系统调用
+
+| name      | eax(调用号) | ebx        | ecx      | edc             |
+| --------- | ----------- | ---------- | -------- | --------------- |
+| sys_read  | 3           | 文件描述符 | 文件地址 | 文件长度        |
+| sys_write | 4           | 文件描述符 | 文件地址 | 文件长度/缓冲区 |
+| sys_exit  | 1           | 错误码     |          |                 |
+
+
+
+##### 数组
+
+###### 存储
+
+###### 访问
+
+##### 控制结构
+
+1. if-else
+2. for
+3. while
+4. switch-case
+
+##### 函数调用
+
+* 调用者
+
+###### 调用者保存
+
+必要时保存对应寄存器。比如需要用来传参的寄存器，返回值eax。
+
+###### 参数压栈
+
+所有参数依次从右到左压栈。
+
+###### call指令
+
+自动保存返回地址
+
+* 被调用者准备阶段
+
+###### 保存EBP旧值，并更新EBP指向它
+
+第一个参数地址是[EBP] + 8，以及更高地址（栈从高向低增长）
+
+###### 被调用者保存
+
+过程使用到的寄存器需要保存
+
+* 被调用者过程体
+* 被调用者结束阶段
+
+###### 被调用者恢复
+
+###### leave指令
+
+恢复ebp旧值
+
+###### ret指令
+
+ret返回返回地址
+
+#### 指令
+
+一条指令的两个操作数必须有一个可以说明其类型即寻址的大小
+
+#### 程序设计
 
 ##### 存储
 
@@ -70,3 +307,16 @@ mulResult
 ###### mulByte(longInt * eax, byte * ebx)
 
 对longInt乘一个byte（一位的十进制数），结果放在[eax]。
+
+
+
+
+
+
+
+
+
+
+
+
+
