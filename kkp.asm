@@ -83,13 +83,24 @@ getLongIntReadByte:;读取一个byte到buf
     mov edx, 1d;读一个byte
     int 80h
 
+    ;如果是负号，就把ptr位置设置为1（负数）
     ;如是空格或者换行就把inputBuf按正确顺序放到ptr中并结束。
     mov eax, [byteBuf];取出这个地址的值而不是这个符号的地址
     cmp eax, 32d;空格
     je getLongIntInvertBuff
     cmp eax, 10d;换行
     je getLongIntInvertBuff
+    cmp eax, 45d;负号
+    jne getLongIntReadByteNotNeg
+    mov ebx, dword[ebp - 16]
+    mov byte[ebx], 1d
+    ;remain减去1
+    mov eax, [ebp - 20];eax = remain
+    dec eax;eax--
+    mov [ebp - 20], eax;remain = eax。
+    jmp getLongIntReadByte
 
+getLongIntReadByteNotNeg:
     ;将读到的字符放在 [inputBuf + 剩余位数]
     mov eax, [ebp - 20];eax = remain
     mov ebx, inputBuf;ebx = inputBuf
@@ -167,6 +178,7 @@ printLongInt:
     mov ebx, 1d
     mov ecx, byteBuf;ecx = bytebuf
     mov edx, 1d
+    int 80h
     pop ecx
     pop eax
     pop ebx
