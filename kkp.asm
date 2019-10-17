@@ -139,7 +139,7 @@ getLongIntEnd:
     leave
     ret
 
-    
+
 printLongInt:
     ;准备阶段
     push ebp
@@ -174,7 +174,7 @@ printLongIntStartLoop:
     ;循环指向第一个非0字符. 地址为ebx + ecx，循环结束为ecx == 44
     inc ecx;    ecx++
     mov eax, [ebx + ecx]
-    cmp eax, 48d
+    cmp al, 0
     je printLongIntStartLoop;此时ebx + ecx指向最高位。（ecx最大是44）
 printLongIntPrintLoop:
     ;打印一个字符
@@ -187,15 +187,25 @@ printLongIntPrintLoop:
     mov ebx, 1d
     mov ecx, byteBuf
     mov edx, 1d
+    int 80h
     pop ecx
     pop ebx
     ;如果ecx到达44，退出。不然继续ecx++循环
     cmp ecx, 44d
     je printLongIntEnd
+    inc ecx
     jmp printLongIntPrintLoop
 
     ;结束阶段
 printLongIntEnd:
+    ;先打印一个换行
+    mov al, 10d
+    mov byte[byteBuf], al
+    mov eax, 4d
+    mov ebx, 1d
+    mov ecx, byteBuf
+    mov edx, 1d
+    int 80h
     add esp, 4;栈指针指向被调用者保存的第一个寄存器
     pop edx
     pop ecx
