@@ -193,8 +193,6 @@ EDI
 
 
 
-##### 寄存器职责
-
 ##### 系统调用
 
 | name      | eax(调用号) | ebx        | ecx      | edc             |
@@ -280,7 +278,7 @@ byte数组 + 长度 + 符号
 
 其实就是8421BCD码。
 
-定长，长度为45byte。最高位byte为符号位，1负0正。
+定长，长度为45byte。最高位byte为符号位，正0负1。
 
 ##### 全局变量
 
@@ -304,7 +302,7 @@ mulResult
 
 循环获取字符，直到以/0结尾。
 
-###### printLongInt(char * eax)
+###### printLongInt(char * ecx)
 
 打印在ptr位置的longInt，到stdout。
 
