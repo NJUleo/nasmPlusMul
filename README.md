@@ -312,6 +312,10 @@ mulResult
 
 如果是一正一负就把
 
+###### addLongIntPos(longInt * eax, longInt * ebx, longInt * ecx)
+
+计算两个**正的**longInt的和，结果放在[ecx]
+
 ###### ecx addByte(char * eax, char * ebx, ecx)
 
 两个byte加和，ecx为进位。结果存储在[eax]
@@ -332,7 +336,9 @@ mulResult
 
 对longInt乘一个byte（一位的十进制数），结果放在[eax]。
 
+###### cpLongInt(longInt * eax, longInt * ebx)
 
+把一个longInt从eax复制到ebx
 
 
 

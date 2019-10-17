@@ -3,35 +3,41 @@ msg db "KKP!!!",0ah;0ah(ASCII码：换行符)，odh(ASCII码：回车符)
 msglen equ ($ - msg)
 
 SECTION .bss
-input1  resb    45;Q:res部分是初始化为0？
-input2  resb    45
-inputBuf    resb    45
-op1 resb    45
-op2 resb    45
-addResult   resb    45
-mulResult   resb    45
+input1  resb    44;Q:res部分是初始化为0？
+input2  resb    44
+inputBuf    resb    44
+op1 resb    44
+op2 resb    44
+addResult   resb    44
+mulResult   resb    44
 byteBuf resb    1
+zeroLongInt resb    44
 
 SECTION .text
 global _start
 
 
 _start:
+    ;局部变量
+    ;sub esp, 44
 
     ;打印kkp，作为程序的开始
     push eax
     call printKKP
     pop eax
 
-    ;分别获取两个input
+    ;分别获取两个input,存在input1和input2
     ;lea ecx, input1
     mov ecx, input1
     call getLongInt
     mov ecx, input2
     call getLongInt
 
+
     ;debug, 打印两个longInt
     mov ecx, input1
+    call printLongInt
+    mov ecx, input2
     call printLongInt
     
 
@@ -73,7 +79,7 @@ getLongInt:
 
 ;局部变量
     push ecx    ;ptr 地址，存于ebp - 16
-    push 44d ;remain剩余可读的位数，存于ebp - 20。44是因为，最后一位在ptr + 44的位置。
+    push 43d ;remain剩余可读的位数，存于ebp - 20。43是因为，最后一位在ptr + 43的位置。
 
 ;过程体
 getLongIntReadByte:;读取一个byte到buf
@@ -92,8 +98,8 @@ getLongIntReadByte:;读取一个byte到buf
     je getLongIntInvertBuff
     cmp eax, 45d;负号
     jne getLongIntReadByteNotNeg
-    mov ebx, dword[ebp - 16]
-    mov byte[ebx], 1d
+    mov ebx, dword[ebp - 16];ebx = ptr
+    mov byte[ebx], 1d;[ptr] = 1
     ;remain减去1
     mov eax, [ebp - 20];eax = remain
     dec eax;eax--
@@ -115,19 +121,19 @@ getLongIntReadByteNotNeg:
     jmp getLongIntReadByte
 
 getLongIntInvertBuff:    
-    ;ecx为计数器，从44 - remain 到 1。每次ptr[remain + ecx] = inputBuf[45 - ecx]
-    mov ecx, 44d
+    ;ecx为计数器，从43 - remain 到 1。每次ptr[remain + ecx] = inputBuf[44 - ecx]
+    mov ecx, 43d
     mov ebx, [ebp - 20]
-    sub ecx, ebx;ecx = 44 - remain
+    sub ecx, ebx;ecx = 43 - remain
     ;循环
 getLongIntInvertBuffLoop:
     je getLongIntEnd;ecx等于0时完事
 
 
-    ;ptr[remain + ecx] = inputBuf[45 - ecx]
-    ;dl = inputBuf[45 - ecx]
-    mov eax, 45
-    sub eax, ecx;eax = 45 - ecx
+    ;ptr[remain + ecx] = inputBuf[44 - ecx]
+    ;dl = inputBuf[44 - ecx]
+    mov eax, 44
+    sub eax, ecx;eax = 44 - ecx
     mov ebx, inputBuf
     mov dl, byte[ebx + eax]
     sub edx, 30h;减去0 的ascii码
@@ -143,6 +149,15 @@ getLongIntInvertBuffLoop:
 
 ;结束阶段
 getLongIntEnd:
+    ;消除函数副作用，把inputBuff置为0
+    push eax
+    push ebx
+    mov eax, zeroLongInt
+    mov ebx, inputBuf
+    call cpLongInt
+    pop ebx
+    pop eax
+
     add esp, 8;栈指针指向被调用者保存的第一个寄存器。
     pop edx
     pop ebx
@@ -183,11 +198,11 @@ printLongInt:
     pop eax
     pop ebx
 printLongIntStartLoop:
-    ;循环指向第一个非0字符. 地址为ebx + ecx，循环结束为ecx == 44
+    ;循环指向第一个非0字符. 地址为ebx + ecx，循环结束为ecx == 43
     inc ecx;    ecx++
     mov eax, [ebx + ecx]
     cmp al, 0
-    je printLongIntStartLoop;此时ebx + ecx指向最高位。（ecx最大是44）
+    je printLongIntStartLoop;此时ebx + ecx指向最高位。（ecx最大是43）
 printLongIntPrintLoop:
     ;打印一个字符
     mov al, byte[ebx + ecx]
@@ -202,8 +217,8 @@ printLongIntPrintLoop:
     int 80h
     pop ecx
     pop ebx
-    ;如果ecx到达44，退出。不然继续ecx++循环
-    cmp ecx, 44d
+    ;如果ecx到达43，退出。不然继续ecx++循环
+    cmp ecx, 43d
     je printLongIntEnd
     inc ecx
     jmp printLongIntPrintLoop
@@ -224,3 +239,29 @@ printLongIntEnd:
     pop ebx 
     leave
     ret
+
+
+cpLongInt:
+    ;准备阶段
+    push ebp
+    mov ebp, esp
+    push ecx
+    push edx
+
+    ;过程体
+    mov ecx, 10;ecx计数，ecx从0到10。每次dest[ecx * 4] = src[ecx * 4]
+cpLongIntLoop:
+    mov edx, dword[eax + ecx * 4]
+    mov dword[ebx + ecx * 4], edx;dest[ecx * 4] = src[ecx * 4]
+    dec ecx
+    js cpLongIntEnd;小于0就结束
+    jmp cpLongIntLoop
+
+    ;结束阶段
+cpLongIntEnd:
+    add esp, 12d
+    pop edx
+    pop ecx
+    leave
+    ret
+
