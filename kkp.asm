@@ -426,8 +426,54 @@ addLongIntPosEnd:
     pop edx
     leave
     ret
-subLongIntPos:
-    call printKKP
-    call printKKP
 
 
+subLongIntPos:;两个LontInt相减，默认认为两个数是正
+    call printKKP
+    ;准备阶段
+    push ebp
+    mov ebp, esp
+    push edx
+    ;局部变量
+    push eax;ptr1,[ebp - 8]
+    push ebx;ptr2, [ebp - 12]
+    push ecx; resultPtr, [ebp - 16]
+
+    ;过程体
+    ;循环，ecx从43到1。计算[ebp - 16] = [[ebp - 8] + ecx] - [[ebp - 12] + ecx]
+    ;edx 保存上一次的进位。
+    mov ecx, 43
+    mov edx, 0
+subLongIntPosAddLoop:
+    mov eax, 0
+    mov ebx, dword[ebp - 8];ebx = ptr1
+    mov bl, byte[ebx + ecx];bl = [ptr1 + ecx]
+    and ebx, 0xFF;取b的最后一个byte
+    add eax, ebx;eax += ebx
+    mov ebx, dword[ebp - 12];ebx = ptr2
+    mov bl, byte[ebx + ecx];bl = [ptr2 + ecx]
+    and ebx, 0xFF
+    sub eax, ebx;eax -= ebx
+    sub eax, edx;eax += edx, 减去上次的进位
+    ;设置进位
+    js subLongIntPosAddLoopJieWei;小于0，需要借位
+    mov edx, 0
+subLongIntPosAddLoopEnd:
+    ;保存到resultPtr对应位置。
+    mov ebx, dword[ebp - 16];ebx = resultPtr
+    mov byte[ebx + ecx], al;
+    dec ecx
+    jz subLongIntPosEnd;ecx == 0的时候结束
+    jmp subLongIntPosAddLoop
+subLongIntPosAddLoopJieWei:
+    mov edx, 1;借位为1
+    add eax, 10;加上10
+    jmp subLongIntPosAddLoopEnd
+
+
+    ;结束阶段
+subLongIntPosEnd:
+    sub esp, 12;局部变量退栈
+    pop edx
+    leave
+    ret
