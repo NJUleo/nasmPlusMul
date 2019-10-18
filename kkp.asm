@@ -46,6 +46,8 @@ _start:
     mov ebx, input2
     mov ecx, addResult
     call addLongInt
+    mov ecx, addResult
+    call printLongInt
     pop ecx
     pop ebx
     pop eax
@@ -112,10 +114,10 @@ getLongIntReadByte:;读取一个byte到buf
     jne getLongIntReadByteNotNeg
     mov ebx, dword[ebp - 16];ebx = ptr
     mov byte[ebx], 1d;[ptr] = 1
-    ;remain减去1
-    mov eax, [ebp - 20];eax = remain
-    dec eax;eax--
-    mov [ebp - 20], eax;remain = eax。
+    ;remain减去1（不需要？）
+    ;mov eax, [ebp - 20];eax = remain
+    ;dec eax;eax--
+    ;mov [ebp - 20], eax;remain = eax。
     jmp getLongIntReadByte
 
 getLongIntReadByteNotNeg:
@@ -284,10 +286,10 @@ addLongInt:
     push edx
 
 ;局部变量
-    push eax;ptr1 [ebp - 4]
-    push ebx;ptr2 [ebp - 8]
-    push ecx;ptrResult [ebp - 12]
-    mov edx, 0d
+    push eax;ptr1 [ebp - 8]
+    push ebx;ptr2 [ebp - 12]
+    push ecx;ptrResult [ebp - 16]
+    
 
     ;过程体
     ;判断如果第一个是负数,
@@ -310,9 +312,9 @@ addLongIntPosNeg:
     push eax
     push ebx
     push ecx
-    mov eax, dword[ebp - 4]
     mov eax, dword[ebp - 8]
-    mov ecx, dword[ebp - 12]
+    mov ebx, dword[ebp - 12]
+    mov ecx, dword[ebp - 16]
     call subLongIntPos
     push ecx
     pop ebx
@@ -322,32 +324,32 @@ addLongIntNegPos:
     push eax
     push ebx
     push ecx
-    mov eax, dword[ebp - 8]
-    mov eax, dword[ebp - 4]
-    mov ecx, dword[ebp - 12]
+    mov eax, dword[ebp - 12]
+    mov ebx, dword[ebp - 8]
+    mov ecx, dword[ebp - 16]
     call subLongIntPos
     push ecx
     pop ebx
     pop eax
     ;结果取负
     mov al, 1
-    mov ebx, [ebp - 12]
+    mov ebx, [ebp - 16]
     mov byte[ebx], al
     jmp addLongIntEnd
 addLongIntAllNeg:
     push eax
     push ebx
     push ecx
-    mov eax, dword[ebp - 4]
     mov eax, dword[ebp - 8]
-    mov ecx, dword[ebp - 12]
+    mov ebx, dword[ebp - 12]
+    mov ecx, dword[ebp - 16]
     call addLongIntPos
     push ecx
     pop ebx
     pop eax
     ;结果取负
     mov al, 1
-    mov ebx, [ebp - 12]
+    mov ebx, [ebp - 16];j结果取负
     mov byte[ebx], al
     jmp addLongIntEnd
 
@@ -355,9 +357,9 @@ addLongIntAllPos:
     push eax
     push ebx
     push ecx
-    mov eax, dword[ebp - 4]
     mov eax, dword[ebp - 8]
-    mov ecx, dword[ebp - 12]
+    mov ebx, dword[ebp - 12]
+    mov ecx, dword[ebp - 16]
     call addLongIntPos
     push ecx
     pop ebx
@@ -373,8 +375,59 @@ addLongIntEnd:
     leave
     ret
 
-addLongIntPos:
+addLongIntPos:;两个LontInt相加，默认认为两个数是正，结果设置为正数
     call printKKP
+    ;准备阶段
+    push ebp
+    mov ebp, esp
+    push edx
+    ;局部变量
+    push eax;ptr1,[ebp - 8]
+    push ebx;ptr2, [ebp - 12]
+    push ecx; resultPtr, [ebp - 16]
+
+    ;过程体
+    ;循环，ecx从43到1。计算[ebp - 16] = [[ebp - 8] + ecx] + [[ebp - 12] + ecx]
+    ;edx 保存上一次的进位。
+    mov ecx, 43
+    mov edx, 0
+addLongIntPosAddLoop:
+    mov eax, 0
+    mov ebx, dword[ebp - 8];ebx = ptr1
+    mov bl, byte[ebx + ecx];bl = [ptr1 + ecx]
+    and ebx, 0xFF;取b的最后一个byte
+    add eax, ebx;eax += ebx
+    mov ebx, dword[ebp - 12];ebx = ptr2
+    mov bl, byte[ebx + ecx];bl = [ptr2 + ecx]
+    and ebx, 0xFF
+    add eax, ebx;eax += ebx
+    add eax, edx;eax += edx, 加上上次的进位
+    ;设置进位
+    cmp eax, 10d
+    jae addLongIntPosAddLoopJinWei;大于等于10，需要进位
+    mov edx, 0
+addLongIntPosAddLoopEnd:
+    ;保存到resultPtr对应位置。
+    mov ebx, dword[ebp - 16];ebx = resultPtr
+    mov byte[ebx + ecx], al;
+    dec ecx
+    jz addLongIntPosEnd;ecx == 0的时候结束
+    jmp addLongIntPosAddLoop
+addLongIntPosAddLoopJinWei:
+    mov edx, 1;进位为1
+    sub eax, 10;把10去掉
+    jmp addLongIntPosAddLoopEnd
+
+
+
+    ;结束阶段
+addLongIntPosEnd:
+    sub esp, 12;局部变量退栈
+    pop edx
+    leave
+    ret
 subLongIntPos:
     call printKKP
     call printKKP
+
+
