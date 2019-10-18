@@ -60,11 +60,9 @@ _start:
     push ebx
     push ecx
     mov eax, input1
-    mov ebx, mulResult
-    call cpLongInt
-    mov eax, mulResult
-    mov ebx, 2d
-    call mulByte
+    mov ebx, input2
+    mov ecx, mulResult
+    call mulLongInt
     mov ecx, mulResult
     call printLongInt
     pop ecx
@@ -292,7 +290,6 @@ cpLongIntLoop:
 
     ;结束阶段
 cpLongIntEnd:
-    add esp, 12d
     pop edx
     pop ecx
     leave
@@ -395,7 +392,6 @@ addLongIntEnd:
     ret
 
 addLongIntPos:;两个LontInt相加，默认认为两个数是正（最高位是0），结果设置为正数
-    call printKKP
     ;准备阶段
     push ebp
     mov ebp, esp
@@ -557,7 +553,7 @@ mulByteLoop:;计算结果放在ax，bl放Byte
     ;设置进位
     cmp ax, 10d
     jae mulByteLoopJinWei;大于等于10，需要进位
-    mov edx, 0;小于10，进位设置为1
+    mov edx, 0;小于10，进位设置为0
 mulByteLoopEnd:
     ;保存到resultPtr对应位置。
     mov ebx, dword[ebp - 12];ebx = ptrLongInt
@@ -583,5 +579,114 @@ mulByteEnd:
     pop ecx
     leave
     ret
+mulLongIntPos:
+    ;准备阶段
+    push ebp
+    mov ebp, esp
+    push edx
+;局部变量
+    push eax;ptr1 [ebp - 8]
+    push ebx;ptr2 [ebp - 12]
+    push ecx;resultPtr [ebp - 16]
 
+    ;过程体
+    ;resultPtr = 0
+    push eax
+    push ebx
+    mov eax, zeroLongInt
+    mov ebx, dword[ebp - 16]
+    call cpLongInt
+    pop ebx
+    pop eax
+    ;ecx = 1
+    mov ecx, 1d
+mulLongIntPosLoop:
+    ;循环，ecx从1到43，
+    ;计算mulByte(resultPtr, 10d),
+    push eax
+    push ebx
+    mov eax, dword[ebp - 16]
+    mov bl, 10d
+    and ebx, 0xFF
+    call mulByte
+    pop ebx
+    pop eax
+    ;[inputBuf] = [ptr1]
+    push eax
+    push ebx
+    mov eax, [ebp - 8]
+    mov ebx, inputBuf
+    call cpLongInt
+    pop ebx
+    pop eax
+    ;mulByte(inputBuf, [ptr2 + ecx])
+    push eax
+    push ebx
+    mov eax, inputBuf
+    mov ebx, [ebp - 12]
+    mov bl, byte[ebx + ecx];ebx = [ptr2 + ecx]
+    and ebx, 0xFF
+    call mulByte
+    pop ebx
+    pop eax
+    ;[resultPtr] += [inputBuf]
+    push eax
+    push ebx
+    push ecx
+    mov eax, [ebp - 16];eax = resultPtr
+    mov ebx, inputBuf;ebx = inputBuf
+    mov ecx, [ebp - 16];ecx = resultPtr
+    call addLongIntPos
+    pop ecx
+    pop ebx
+    pop eax
+    ;ecx = 43时退出
+    cmp ecx, 43d
+    jz mulLongIntPosEnd
+    ;ecx++
+    inc ecx
+    ;回到循环
+    jmp mulLongIntPosLoop
 
+mulLongIntPosEnd:
+    ;结束阶段
+    add esp, 12d;局部变量出栈
+    pop edx
+    leave
+    ret
+
+mulLongInt:
+        ;准备阶段
+    push ebp
+    mov ebp, esp
+    push edx
+
+    ;局部变量
+    push eax;ptr1 [ebp - 8]
+    push ebx;ptr2 [ebp - 12]
+    push ecx;resultptr [ebp -16]
+
+    ;过程体
+    ;计算
+    push eax
+    push ebx
+    push ecx
+    call mulLongIntPos
+    pop ecx
+    pop ebx
+    pop eax
+    ;符号为两个符号的异或
+    mov eax, 0d
+    mov ebx, dword[ebp - 8]
+    mov al, byte[ebx]
+    mov ebx, dword[ebp - 12]
+    mov bl, byte[ebx]
+    xor al, bl
+    mov ebx, dword[ebp - 16]
+    mov byte[ebx], al
+
+    ;结束阶段
+    add esp, 12d;局部变量出栈
+    pop edx
+    leave
+    ret
