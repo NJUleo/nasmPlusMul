@@ -2,6 +2,7 @@ SECTION .data
 msg db "KKP!!!",0ah;0ah(ASCII码：换行符)，odh(ASCII码：回车符)
 msglen equ ($ - msg)
 subOverflow db 0x
+zero db "0"
 
 SECTION .bss
 input1  resb    44;Q:res部分是初始化为0？
@@ -229,11 +230,14 @@ printLongInt:
     pop eax
     pop ebx
 printLongIntStartLoop:
-    ;循环指向第一个非0字符. 地址为ebx + ecx，循环结束为ecx == 43
+    ;循环指向第一个非0字符，或者ecx == 44. 地址为ebx + ecx，循环结束为ecx == 43
     inc ecx;    ecx++
+    cmp ecx, 44
+    je printLongIntZero
     mov eax, [ebx + ecx]
     cmp al, 0
-    je printLongIntStartLoop;此时ebx + ecx指向最高位。（ecx最大是43）
+    je printLongIntStartLoop
+;此时ebx + ecx指向最高位。（ecx最大是43）
 printLongIntPrintLoop:
     ;打印一个字符
     mov al, byte[ebx + ecx]
@@ -253,7 +257,12 @@ printLongIntPrintLoop:
     je printLongIntEnd
     inc ecx
     jmp printLongIntPrintLoop
-
+printLongIntZero:
+    mov eax, 4
+    mov ebx, 1d
+    mov ecx, zero
+    mov edx, 1d
+    int 80h
     ;结束阶段
 printLongIntEnd:
     ;先打印一个换行
@@ -444,7 +453,6 @@ addLongIntPosEnd:
 
 
 subLongIntPos:;两个LontInt相减，默认认为两个数是正（最高位是0）
-    call printKKP
     ;准备阶段
     push ebp
     mov ebp, esp
