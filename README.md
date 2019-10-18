@@ -322,7 +322,7 @@ mulResult
 
 计算两个longInt的积，结果放在[ecx]。
 
-###### mulByte(longInt * eax, byte * ebx)
+###### mulByte(longInt * eax, byte bl)
 
 对longInt乘一个byte（一位的十进制数），结果放在[eax]。
 

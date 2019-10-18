@@ -21,6 +21,8 @@ global _start
 _start:
     ;局部变量
     ;sub esp, 44
+    ;debug
+
 
     ;打印kkp，作为程序的开始
     call printKKP
@@ -52,7 +54,23 @@ _start:
     pop ecx
     pop ebx
     pop eax
-    
+
+    ;计算积.debug 乘2试一下 mulResult *= 2
+    push eax
+    push ebx
+    push ecx
+    mov eax, input1
+    mov ebx, mulResult
+    call cpLongInt
+    mov eax, mulResult
+    mov ebx, 2d
+    call mulByte
+    mov ecx, mulResult
+    call printLongInt
+    pop ecx
+    pop ebx
+    pop eax
+  
 
     mov ebx, 0d
     mov eax, 1d
@@ -512,4 +530,58 @@ subLongIntPosEnd:
     pop edx
     leave
     ret
+mulByte:
+    ;准备阶段
+    push ebp
+    mov ebp, esp
+    push ecx
+    push edx
     
+    ;局部变量
+    push eax;ptrLongInt, [ebp - 12]
+    push ebx;Byte, [ebp - 16]，这里要考虑ebx的前3个byte非零的情况，只需要取bl
+
+    ;过程体
+    ;循环，ecx从43到1。计算[[ebp - 12] + ecx] = byte[[ebp - 12] + ecx] * Byte + JinWei
+    ;edx 保存上一次的进位。
+    mov ecx, 43
+    mov edx, 0
+mulByteLoop:;计算结果放在ax，bl放Byte
+    mov eax, dword[ebp -12]
+    mov al, byte[eax + ecx]
+    mov ebx, dword[ebp - 16]
+    and eax, 0xFF
+    and ebx, 0xFF
+    mul bl;一个byte乘以一个byte，结果在ax中，8byte
+    add eax, edx;加上进位
+    ;设置进位
+    cmp ax, 10d
+    jae mulByteLoopJinWei;大于等于10，需要进位
+    mov edx, 0;小于10，进位设置为1
+mulByteLoopEnd:
+    ;保存到resultPtr对应位置。
+    mov ebx, dword[ebp - 12];ebx = ptrLongInt
+    mov byte[ebx + ecx], al;这里取byte是因为所有大于等于10的被搞成一个十进制位了。
+    dec ecx
+    jz mulByteEnd;ecx == 0的时候结束
+    jmp mulByteLoop
+mulByteLoopJinWei:
+;除法时候涉及到两个寄存器eax edx，做个保存，也许不需要，但是防御性编程嘛，可以接受
+    mov dl, 10d
+    and edx, 0xFF
+    div dl;余数在ah，商在al,商是进位，余数是al
+    mov dl, al
+    mov al, ah
+    and eax, 0xFF
+    and edx, 0xFF
+
+    jmp mulByteLoopEnd
+mulByteEnd:
+    ;结束阶段
+    add esp, 8d;局部变量出栈
+    pop edx
+    pop ecx
+    leave
+    ret
+
+
