@@ -147,7 +147,7 @@ RESx	reserve
 
 Dx	declare
 
-![1571099589224](/home/leo/.config/Typora/typora-user-images/1571099589224.png)
+![1571099589224.png](https://i.loli.net/2019/10/18/y9iV1aUCWPwqev3.png)
 
 ##### 系统调用
 
@@ -310,23 +310,13 @@ mulResult
 
 计算两个long int的加和，结果放在[ecx]。
 
-如果是一正一负就把
-
 ###### addLongIntPos(longInt * eax, longInt * ebx, longInt * ecx)
 
 计算两个**正的**longInt的和，结果放在[ecx]
 
-###### ecx addByte(char * eax, char * ebx, ecx)
-
-两个byte加和，ecx为进位。结果存储在[eax]
-
 ###### subLongInt(longInt * eax, longInt * ebx, longInt * ecx)
 
 计算两个long int的差，结果放在[ecx]。
-
-###### ecx subByte(chat * eax, char * ebx, ecx)
-
-计算两个Byte的差，自动借位。ecx表示借位，是1的时候表示被借了，返回表示下一位是否被借。
 
 ###### mulLongInt(longInt * eax, longInt * ebx, longInt * ecx)
 
