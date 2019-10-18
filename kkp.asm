@@ -37,10 +37,10 @@ _start:
 
 
     ;debug, 打印两个longInt
-    mov ecx, input1
-    call printLongInt
-    mov ecx, input2
-    call printLongInt
+    ;mov ecx, input1
+    ;call printLongInt
+    ;mov ecx, input2
+    ;call printLongInt
 
     ;计算和
     push eax
@@ -356,10 +356,6 @@ addLongIntNegPos:
     push ecx
     pop ebx
     pop eax
-    ;结果取负
-    mov al, 1
-    mov ebx, [ebp - 16]
-    mov byte[ebx], al
     jmp addLongIntEnd
 addLongIntAllNeg:
     push eax
