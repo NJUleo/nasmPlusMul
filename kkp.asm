@@ -22,9 +22,7 @@ _start:
     ;sub esp, 44
 
     ;打印kkp，作为程序的开始
-    push eax
     call printKKP
-    pop eax
 
     ;分别获取两个input,存在input1和input2
     ;lea ecx, input1
@@ -39,6 +37,18 @@ _start:
     call printLongInt
     mov ecx, input2
     call printLongInt
+
+    ;计算和
+    push eax
+    push ebx
+    push ecx
+    mov eax, input1
+    mov ebx, input2
+    mov ecx, addResult
+    call addLongInt
+    pop ecx
+    pop ebx
+    pop eax
     
 
     mov ebx, 0d
@@ -50,6 +60,7 @@ printKKP:
     ;准备阶段
     push ebp
     mov ebp, esp
+    push eax
     push ebx
     push ecx
     push edx
@@ -64,7 +75,8 @@ printKKP:
     ;结束阶段
     pop edx
     pop ecx
-    pop ebx 
+    pop ebx
+    pop eax 
     leave
     ret
 
@@ -265,3 +277,104 @@ cpLongIntEnd:
     leave
     ret
 
+addLongInt:
+;准备阶段
+    push ebp
+    mov ebp, esp
+    push edx
+
+;局部变量
+    push eax;ptr1 [ebp - 4]
+    push ebx;ptr2 [ebp - 8]
+    push ecx;ptrResult [ebp - 12]
+    mov edx, 0d
+
+    ;过程体
+    ;判断如果第一个是负数,
+    mov al, byte[eax]
+    ;mov指令不改变eflags
+    add al, 0
+    jz addLongIntIsFirstPos;第一个正
+    jmp addLongIntIsFirstNeg;第一个负
+addLongIntIsFirstPos:
+    mov al, byte[ebx]
+    add al, 0
+    jz addLongIntAllPos;正的时候是全正
+    jmp addLongIntPosNeg;正负，调用减法
+addLongIntIsFirstNeg:
+    mov al, byte[ebx]
+    add al, 0
+    jz addLongIntNegPos;负正
+    jmp addLongIntAllNeg;全负数
+addLongIntPosNeg:
+    push eax
+    push ebx
+    push ecx
+    mov eax, dword[ebp - 4]
+    mov eax, dword[ebp - 8]
+    mov ecx, dword[ebp - 12]
+    call subLongIntPos
+    push ecx
+    pop ebx
+    pop eax
+    jmp addLongIntEnd
+addLongIntNegPos:
+    push eax
+    push ebx
+    push ecx
+    mov eax, dword[ebp - 8]
+    mov eax, dword[ebp - 4]
+    mov ecx, dword[ebp - 12]
+    call subLongIntPos
+    push ecx
+    pop ebx
+    pop eax
+    ;结果取负
+    mov al, 1
+    mov ebx, [ebp - 12]
+    mov byte[ebx], al
+    jmp addLongIntEnd
+addLongIntAllNeg:
+    push eax
+    push ebx
+    push ecx
+    mov eax, dword[ebp - 4]
+    mov eax, dword[ebp - 8]
+    mov ecx, dword[ebp - 12]
+    call addLongIntPos
+    push ecx
+    pop ebx
+    pop eax
+    ;结果取负
+    mov al, 1
+    mov ebx, [ebp - 12]
+    mov byte[ebx], al
+    jmp addLongIntEnd
+
+addLongIntAllPos:
+    push eax
+    push ebx
+    push ecx
+    mov eax, dword[ebp - 4]
+    mov eax, dword[ebp - 8]
+    mov ecx, dword[ebp - 12]
+    call addLongIntPos
+    push ecx
+    pop ebx
+    pop eax
+    jmp addLongIntEnd
+
+
+
+    ;结束阶段
+addLongIntEnd:
+    add esp, 12d;局部变量退栈
+    pop edx
+    leave
+    ret
+
+addLongIntPos:
+    call printKKP
+subLongIntPos:
+    call printKKP
+    call printKKP
