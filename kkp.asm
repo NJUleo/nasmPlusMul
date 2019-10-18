@@ -26,7 +26,7 @@ _start:
 
 
     ;打印kkp，作为程序的开始
-    call printKKP
+    ;call printKKP
 
     ;分别获取两个input,存在input1和input2
     ;lea ecx, input1
