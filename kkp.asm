@@ -1,6 +1,7 @@
 SECTION .data
 msg db "KKP!!!",0ah;0ah(ASCII码：换行符)，odh(ASCII码：回车符)
 msglen equ ($ - msg)
+subOverflow db 0x
 
 SECTION .bss
 input1  resb    44;Q:res部分是初始化为0？
@@ -375,7 +376,7 @@ addLongIntEnd:
     leave
     ret
 
-addLongIntPos:;两个LontInt相加，默认认为两个数是正，结果设置为正数
+addLongIntPos:;两个LontInt相加，默认认为两个数是正（最高位是0），结果设置为正数
     call printKKP
     ;准备阶段
     push ebp
@@ -428,7 +429,7 @@ addLongIntPosEnd:
     ret
 
 
-subLongIntPos:;两个LontInt相减，默认认为两个数是正
+subLongIntPos:;两个LontInt相减，默认认为两个数是正（最高位是0）
     call printKKP
     ;准备阶段
     push ebp
@@ -454,7 +455,7 @@ subLongIntPosAddLoop:
     mov bl, byte[ebx + ecx];bl = [ptr2 + ecx]
     and ebx, 0xFF
     sub eax, ebx;eax -= ebx
-    sub eax, edx;eax += edx, 减去上次的进位
+    sub eax, edx;eax -= edx, 减去上次的进位
     ;设置进位
     js subLongIntPosAddLoopJieWei;小于0，需要借位
     mov edx, 0
@@ -463,7 +464,7 @@ subLongIntPosAddLoopEnd:
     mov ebx, dword[ebp - 16];ebx = resultPtr
     mov byte[ebx + ecx], al;
     dec ecx
-    jz subLongIntPosEnd;ecx == 0的时候结束
+    jz subLongIntPosLoopEnd;ecx == 0的时候结束
     jmp subLongIntPosAddLoop
 subLongIntPosAddLoopJieWei:
     mov edx, 1;借位为1
@@ -472,8 +473,43 @@ subLongIntPosAddLoopJieWei:
 
 
     ;结束阶段
+subLongIntPosLoopEnd:
+    ;如果在最后的时候，借位为1，说明结果是负数，发生了溢出。这时候把最高位设置为0，用1000……0减去它。
+    sub edx, 1
+    jnz subLongIntPosEnd
+    ;做溢出处理
+    ;缓冲inputBuf设置为0
+    mov eax, zeroLongInt
+    mov ebx, inputBuf
+    call cpLongInt
+    ;把inputBuf的最高位设置为1
+    mov al, 1d
+    mov byte[ebx + 1], al
+    ;[resultptr + 1] = 0, [resultPtr] = 1,把结果的最高位设置为负，次高位减去1。
+    mov ebx, [ebp - 16]
+    mov al, 0d
+    mov byte[ebx + 1], al
+    mov al, 1d
+    mov byte[ebx], al
+
+    ;100……0 - result
+    push eax
+    push ebx
+    push ecx
+    mov eax, inputBuf
+    mov ebx, [ebp - 16]
+    mov ecx, [ebp - 16]
+    call subLongIntPos
+    pop ecx
+    pop ebx
+    pop eax
+    ;buf清零
+    mov eax, zeroLongInt
+    mov ebx, inputBuf
+    call cpLongInt
 subLongIntPosEnd:
     sub esp, 12;局部变量退栈
     pop edx
     leave
     ret
+    
